@@ -20,7 +20,7 @@ public class NinjaController : MonoBehaviour
     private bool isFacingRight;
     private float horizontalInput;
 
-    private float currentSpeed;
+    private float XCurrentSpeed;
 
     #region Unity Cycle
     private void Awake()
@@ -29,7 +29,7 @@ public class NinjaController : MonoBehaviour
         this.animator = this.GetComponent<Animator>();
         this.isFacingRight = true;
         this.currentVelocity = Vector2.zero;
-        this.currentSpeed = this.XSpeed;
+        this.XCurrentSpeed = this.XSpeed;
     }
 
     private void Update()
@@ -37,25 +37,42 @@ public class NinjaController : MonoBehaviour
         CaptureHorizontalMovementInput();
     }
 
+    private void FixedUpdate()
+    {
+        if (!Mathf.Approximately(this.horizontalInput, 0.0f))
+        {
+            Move();
+        }
+    }
+    #endregion
+
     private void CaptureHorizontalMovementInput()
     {
         this.horizontalInput = Input.GetAxis("Horizontal");
 
+        if (rb2d.velocity.sqrMagnitude < .01 && rb2d.angularVelocity < .01)
+        {
+            
+        }
+
         CaptureRunInput();
         CaptureFlipNecessity();
 
-        animator.SetFloat("Speed", Mathf.Abs(this.horizontalInput));
+        Debug.Log(rb2d.velocity.sqrMagnitude);
+
+        //Debug.Log(this.XCurrentSpeed / this.XSpeedRun);
+        animator.SetFloat("Speed", this.XCurrentSpeed / this.XSpeedRun);
     }
 
     private void CaptureRunInput()
     {
-        if (Input.GetButton("Run") && this.currentSpeed < this.XSpeedRun)
+        if (Input.GetButton("Run") && this.XCurrentSpeed < this.XSpeedRun && Mathf.Abs(this.horizontalInput) > 0.01f)
         {
-            this.currentSpeed += this.XAcceleration;
+            this.XCurrentSpeed += this.XAcceleration;
         }
-        else if (Input.GetButtonUp("Run"))
+        else if (Input.GetButtonUp("Run") || Mathf.Approximately(this.horizontalInput, 0.0f))
         {
-            this.currentSpeed = this.XSpeed;
+            this.XCurrentSpeed = this.XSpeed;
         }
     }
 
@@ -71,20 +88,9 @@ public class NinjaController : MonoBehaviour
         }
     }
 
-
-
-    private void FixedUpdate()
-    {
-        if (!Mathf.Approximately(this.horizontalInput, 0.0f))
-        {
-            Move();
-        }
-    }
-    #endregion
-
     private void Move()
     {
-        Vector2 targetLocation = new Vector2(this.currentSpeed * this.horizontalInput * Time.deltaTime, rb2d.velocity.y);
+        Vector2 targetLocation = new Vector2(this.XCurrentSpeed * this.horizontalInput * Time.deltaTime, rb2d.velocity.y);
         this.rb2d.velocity = Vector2.SmoothDamp(this.rb2d.velocity, targetLocation, ref this.currentVelocity, this.XMoveSmooth);
     }
 
